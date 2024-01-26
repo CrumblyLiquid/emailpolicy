@@ -1,0 +1,7 @@
+base   emailpolicy
+author Phil Underwood
+email  beardydoc@gmail.com
+date   2024-01-26
+name   emailpolicy plugin
+desc   Allows to prevent registration based on email address
+url    https://www.dokuwiki.org/plugin:emailpolicy
