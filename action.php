@@ -53,13 +53,10 @@ class action_plugin_emailpolicy extends ActionPlugin
         }
         $allow = $this->getConf('allow');
         $deny = $this->getConf('deny');
-        dbglog('allow: '.implode(',',$allow));
-        dbglog('deny: '.implode(',',$deny));
         if (count($allow) > 0)  {
             $pass = false;
             foreach ($allow as $x) {
                 if ($this->endsWith($email, $x)) {
-                     print("matched with".$x);
                      $pass = true;
                 }
             }
