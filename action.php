@@ -53,9 +53,9 @@ class action_plugin_emailpolicy extends ActionPlugin
         }
         $allow = $this->getConf('allow');
         $deny = $this->getConf('deny');
-        if (count($allow) > 0)  {
+        if (count((array)$allow) > 0)  {
             $pass = false;
-            foreach ($allow as $x) {
+            foreach ((array)$allow as $x) {
                 if ($this->endsWith($email, $x)) {
                      $pass = true;
                 }
@@ -66,8 +66,8 @@ class action_plugin_emailpolicy extends ActionPlugin
                 $event->stopPropagation();
             }
         }
-        if (count($deny) > 0) {
-            foreach ($deny as $x) {
+        if (count((array)$deny) > 0) {
+            foreach ((array)$deny as $x) {
                 if ($this->endsWith($email, $x)) {
                     msg($this->getLang('deny_failed') . implode(', ',$deny), -1);
                     $event->preventDefault();
