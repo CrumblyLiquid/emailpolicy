@@ -50,7 +50,7 @@ class action_plugin_emailpolicy extends ActionPlugin {
         return match ($event->data['type']) {
             'create' => $event->data['params'][3],
             'modify' => $event->data['params'][1]['mail'],
-            _ => null,
+            default => null,
         };
     }
 
