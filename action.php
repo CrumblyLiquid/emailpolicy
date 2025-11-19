@@ -10,70 +10,53 @@ use dokuwiki\Extension\Event;
  * @license GPL 2 http://www.gnu.org/licenses/gpl-2.0.html
  * @author Phil Underwood <beardydoc@gmail.com>
  */
-class action_plugin_emailpolicy extends ActionPlugin
-{
+class action_plugin_emailpolicy extends ActionPlugin {
     /** @inheritDoc */
-    public function register(EventHandler $controller)
-    {
-        $controller->register_hook('AUTH_USER_CHANGE', 'BEFORE', $this, 'handleAuthUserChange');
-
+    public function register(EventHandler $controller): void {
+        $controller->register_hook('AUTH_USER_CHANGE', 'BEFORE', $this, 'handleUserChange');
     }
-
 
     /**
      * Event handler for AUTH_USER_CHANGE
      *
-     * @see https://www.dokuwiki.org/devel:events:AUTH_USER_CHANGE
+     * @see https://www.dokuwiki.org/devel:event:auth_userdata_change
      * @param Event $event Event object
      * @param mixed $param optional parameter passed when event was registered
      * @return void
      */
-     
-    private function endsWith($string, $endString) 
-    { 
-        $len = strlen($endString); 
-        if ($len == 0) { 
-            return true; 
-        } 
-        return (substr($string, -$len) === $endString); 
-    }  
-     
-    public function handleAuthUserChange(Event $event, $param)
-    {
-        if ($event->data['type'] == 'create') {
-            $email = $event->data['params'][3];
-        } elseif ($event->data['type'] == 'modify') {
-            // may want to get username and check groups separately
-            if (!isset($event->data['params'][1]['mail'])) {
-                return; //email is not changed, nothing to do
-            }
-            $email = $event->data['params'][1]['mail'];
-        } else {
+    public function handleUserChange(Event $event, $param): void {
+        $email = $this->extractEmail($event);
+
+        if (is_null($email))
             return;
+
+
+        $deny = $this->getConf('deny');
+        if ($this->checkEmail($email, $deny)) {
+            msg($this->getLang('deny_failed') . $deny);
+            $event->preventDefault();
+            $event->stopPropagation();
         }
-        $allow = (array)$this->getConf('allow');
-        $deny = (array)$this->getConf('deny');
-        if (count($allow) > 0)  {
-            $pass = false;
-            foreach ($allow as $x) {
-                if ($this->endsWith($email, $x)) {
-                     $pass = true;
-                }
-            }
-            if (!$pass) {
-                msg($this->getLang('allow_failed') . implode(', ',$allow), -1);
-                $event->preventDefault();
-                $event->stopPropagation();
-            }
+
+        $allow = $this->getConf('allow');
+        if ($allow !== '' && !$this->checkEmail($email, $allow)) {
+            msg($this->getLang('allow_failed') . $allow);
+            $event->preventDefault();
+            $event->stopPropagation();
         }
-        if (count($deny) > 0) {
-            foreach ($deny as $x) {
-                if ($this->endsWith($email, $x)) {
-                    msg($this->getLang('deny_failed') . implode(', ',$deny), -1);
-                    $event->preventDefault();
-                    $event->stopPropagation();
-                }
-            }
-        }
+    }
+
+    protected function extractEmail(Event $event): ?string {
+        return match ($event->data['type']) {
+            'create' => $event->data['params'][3],
+            'modify' => $event->data['params'][1]['mail'],
+            _ => null,
+        };
+    }
+
+    protected function checkEmail(string $email, string $domains): bool {
+        $email_domain = substr(strrchr($email, '@'), 1);
+        $domains = array_map('trim', explode(',', $domains));
+        return in_array($email_domain, $domains);
     }
 }
