@@ -5,6 +5,6 @@
  * @author Andreas Gohr <andi@splitbrain.org>
  */
 
-$meta['allow'] = array('array');
-$meta['deny'] = array('array');
+$meta['allow'] = array('string');
+$meta['deny'] = array('string');
 
